@@ -18,28 +18,7 @@ void setup() {
   pinMode(HEATING_PIN, OUTPUT);
   digitalWrite(HEATING_PIN, HIGH);
 
-  Ethernet.setHostname("casa");
-  byte mac[] = {
-    0xDE, 0xAD, 0xBE, 0x9A, 0x49, 0x29
-  };
-  Ethernet.begin(mac);
-
-  // Check for Ethernet hardware present
-  if (Ethernet.hardwareStatus() == EthernetNoHardware) {
-    Serial.println("Ethernet shield was not found.  Sorry, can't run without hardware. :(");
-    Serial.println(Ethernet.hardwareStatus());
-    while (true) {
-      delay(1);  // do nothing, no point running without Ethernet hardware
-    }
-  }
-  if (Ethernet.linkStatus() == LinkOFF) {
-    Serial.println("Ethernet cable is not connected.");
-  }
-
-  // start the server
-  server.begin();
-  Serial.print("server is at ");
-  Serial.println(Ethernet.localIP());
+  initServer();
 }
 
 
@@ -130,4 +109,35 @@ Action parse(EthernetClient& client) {
   }
 
   return res;
+}
+
+void initServer() {
+
+  byte mac[] = {
+    0xDE, 0xAD, 0xBE, 0x9A, 0x49, 0x29
+  };
+
+
+  Enc28J60Network::init(mac); // Necessary before power on
+  Enc28J60Network::powerOn(); // In case only mcu got reset, but enc28j60 is still powered off
+
+  Ethernet.setHostname("casa");
+  Ethernet.begin(mac);
+
+  // Check for Ethernet hardware present
+  if (Ethernet.hardwareStatus() == EthernetNoHardware) {
+    Serial.println("Ethernet shield was not found.  Sorry, can't run without hardware. :(");
+    Serial.println(Ethernet.hardwareStatus());
+    while (true) {
+      delay(1);  // do nothing, no point running without Ethernet hardware
+    }
+  }
+  if (Ethernet.linkStatus() == LinkOFF) {
+    Serial.println("Ethernet cable is not connected.");
+  }
+
+  // start the server
+  server.begin();
+  Serial.print("server is at ");
+  Serial.println(Ethernet.localIP());
 }
