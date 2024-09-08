@@ -8,7 +8,8 @@ EthernetServer server(80);
 
 const int HEATING_PIN = 9;
 
-void setup() {Serial.begin(9600);
+void setup() {
+  Serial.begin(9600);
   while (!Serial) {
     ;  // wait for serial port to connect. Needed for native USB port only
   }
@@ -56,68 +57,44 @@ void loop() {
 
 void handleClient(EthernetClient& client) {
   Serial.print("New client: ");
-
-
-  Method method = parseMethod(client);
-
-  if (method == Method::UNKNOWN) {
-    return;
+  switch ( parse(client) ) {
+    case Action::UnknownPath:
+      Serial.print("Unknown path");
+      client.println("HTTP/1.1 404 Not Found");
+      client.println();
+      break;
+    case Action::Get:
+      Serial.print("GET");
+      client.println("HTTP/1.1 200 OK");
+      client.println("Content-Type: text/html");
+      // client.println("Connection: close");  // the connection will be closed after completion of the response
+      // client.println("Refresh: 5");  // refresh the page automatically every 5 sec
+      client.println();
+      client.print("<!DOCTYPE HTML>\n<html>\n<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" /></head>\n<body>\nHeating is ");
+      client.print(digitalRead(HEATING_PIN) ? "on" : "off");
+      client.println("<br />\n<form method=\"post\"><input type=\"submit\" value=\"Switch\"></form>\n</body>\n</html>");
+      break;
+    case Action::Post:
+      Serial.print("POST");
+      digitalWrite(HEATING_PIN, !digitalRead(HEATING_PIN));
+      client.println("HTTP/1.1 303 See Other");
+      client.println("Location: /");
+      client.println();
+      break;
+    case Action::Ignore:
+      break;
   }
-
-  if (!(client.read() == '/' && client.read() == ' ')) {
-    Serial.println("Unknown path");
-    client.println("HTTP/1.1 404 Not Found");
-    client.println();
-  } else if (method == Method::GET) {
-    Serial.println("GET");
-    client.println("HTTP/1.1 200 OK");
-    client.println("Content-Type: text/html");
-    client.println("Connection: close");  // the connection will be closed after completion of the response
-    // client.println("Refresh: 5");  // refresh the page automatically every 5 sec
-    client.println();
-    client.print("<!DOCTYPE HTML>\n<html>\n<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" /></head>\n<body>\nHeating is ");
-    client.print(digitalRead(HEATING_PIN) ? "on" : "off");
-    client.println("<br />\n<form method=\"post\"><input type=\"submit\" value=\"Switch\"></form>\n</body>\n</html>");
-  } else if (method == Method::POST) {
-    Serial.println("POST");
-    digitalWrite(HEATING_PIN, !digitalRead(HEATING_PIN));
-    client.println("HTTP/1.1 303 See Other");
-    client.println("Location: /");
-    client.println();
-  }
-
   client.stop();
-  Serial.println("Client disconnected");
+  Serial.println(". Client disconnected");
 }
 
-Method parseMethod(EthernetClient& client) {
-  char buf[5];
-  switch (client.readBytesUntil(' ', buf, 5)) {
-    case 3:
-      if (strncmp(buf, "GET", 3) == 0) {
-        return Method::GET;
-      }
-      break;
-    case 4:
-      if (strncmp(buf, "POST", 4) == 0) {
-        return Method::POST;
-      }
-      break;
-    case 0:
-      Serial.println("readBytesUntil was 0");
-      // fall through
-    default:
-      Serial.print("Unhandled method.");
-  }
-  return Method::UNKNOWN;
-}
-
-void readUntilEmptyLine(EthernetClient& client) {
+void readUntilEmptyLine(EthernetClient& client, bool verbose = false) {
   bool currentLineIsBlank = true;
   while (client.connected()) {
     if (client.available()) {
       char c = client.read();
-      // Serial.write(c);
+      if (verbose)
+        Serial.write(c);
       if (c == '\n' && currentLineIsBlank) {
         break;
       }
@@ -128,4 +105,29 @@ void readUntilEmptyLine(EthernetClient& client) {
       }
     }
   }
+}
+
+Action parse(EthernetClient& client) {
+  // parse method
+  Action res;
+  char buf[5];
+  size_t n_read = client.readBytesUntil(' ', buf, 5);
+  if (n_read == 3 && strncmp(buf, "GET", 3) == 0) {
+    res = Action::Get;
+  } else if (n_read == 4 && strncmp(buf, "POST", 4) == 0) {
+    res = Action::Post;
+  } else {
+    Serial.println("Cannot parse:");
+    for (size_t i = 0; i < n_read; ++i)
+      Serial.print(buf[i]);
+    readUntilEmptyLine(client, true);
+    return Action::Ignore;
+  }
+
+  // parse path
+  if (!(client.read() == '/' && client.read() == ' ')) {
+    return Action::UnknownPath;
+  }
+
+  return res;
 }

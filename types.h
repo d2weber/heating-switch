@@ -1,7 +1,6 @@
-
-
-enum Method {
-  GET,
-  POST,
-  UNKNOWN
+enum Action {
+  Ignore,
+  UnknownPath,
+  Get,
+  Post,
 };
