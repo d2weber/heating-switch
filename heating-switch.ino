@@ -1,6 +1,5 @@
 #include <SPI.h>
 #include <EthernetENC.h>
-#include <LowPower.h>
 #include "types.h"
 
 
@@ -28,9 +27,6 @@ void loop() {
   EthernetClient client = server.available();
   if (client) {
     handleClient(client);
-  } else {
-    Serial.flush();
-    LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
   }
 }
 
