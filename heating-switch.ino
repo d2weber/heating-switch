@@ -45,9 +45,9 @@ void handleClient(EthernetClient& client) {
       // client.println("Connection: close");  // the connection will be closed after completion of the response
       // client.println("Refresh: 5");  // refresh the page automatically every 5 sec
       client.println();
-      client.print("<!DOCTYPE HTML>\n<html>\n<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" /></head>\n<body>\nHeating is ");
-      client.print(digitalRead(HEATING_PIN) ? "on" : "off");
-      client.println("<br />\n<form method=\"post\"><input type=\"submit\" value=\"Switch\"></form>\n</body>\n</html>");
+      client.print("<!DOCTYPE HTML>\n<html>\n<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" /></head>\n<body style=\"text-align:center;font-family:sans-serif;padding:1em;\">\nHeating is ");
+      client.print(digitalRead(HEATING_PIN) ? "ON" : "OFF");
+      client.println("<form method=\"post\"><input style=\"margin:1em;height:3em\" type=\"submit\" value=\"Switch\"></form>\n</body>\n</html>");
       break;
     case Action::Post:
       Serial.print("POST");
