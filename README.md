@@ -1,3 +1,3 @@
 # Smart switch for heating
 
-This sketch fits on a Arduino Pro Mini. It starts a webserver with a minimal UI to switch a GPIO pin on and off. I use an ENC28j60, driven by EthernetENC.
+This sketch fits on a Arduino Pro Mini. It starts a webserver with a minimal UI to toggle a GPIO pin between HIGH and LOW. I use an ENC28j60, driven by EthernetENC. I use this switch with a 'Junkers TR100' temperature regulator, which can be controlled using two wires ('RF'). By connecting the two contacts, the heating is turned off. I use an n-channel MOSFET to short circuit the two wires, the GPIO pin (`HEATING_PIN`) is connected to the gate. When the `HEATING_PIN` is low, Drain and Source are high impedance. This setup allows for connecting an external temperatur sensor in parallel to my switch (this is a feature of the 'Junkers TR 100').

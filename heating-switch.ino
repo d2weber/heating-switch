@@ -15,7 +15,7 @@ void setup() {
   Serial.println("Heating switch server");
 
   pinMode(HEATING_PIN, OUTPUT);
-  digitalWrite(HEATING_PIN, HIGH);
+  digitalWrite(HEATING_PIN, LOW);
 
   initServer();
 }
@@ -46,7 +46,7 @@ void handleClient(EthernetClient& client) {
       // client.println("Refresh: 5");  // refresh the page automatically every 5 sec
       client.println();
       client.print("<!DOCTYPE HTML>\n<html>\n<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" /></head>\n<body style=\"text-align:center;font-family:sans-serif;padding:1em;\">\nHeating is ");
-      client.print(digitalRead(HEATING_PIN) ? "ON" : "OFF");
+      client.print(digitalRead(HEATING_PIN) ? "OFF" : "ON");
       client.println("<form method=\"post\"><input style=\"margin:1em;height:3em\" type=\"submit\" value=\"Switch\"></form>\n</body>\n</html>");
       break;
     case Action::Post:
